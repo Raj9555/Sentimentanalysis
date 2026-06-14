@@ -7,8 +7,6 @@ torchaudio
 python-multipart
 openai-whisper
 opencv-python
-fer
-mtcnn
 pillow
 ffmpeg-python
 sentencepiece
