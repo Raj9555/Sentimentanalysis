@@ -14,5 +14,6 @@ protobuf
 tiktoken
 moviepy
 numpy
+sentencepiece
 protobuf
 tiktoken
