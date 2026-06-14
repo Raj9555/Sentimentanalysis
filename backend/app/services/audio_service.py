@@ -1,4 +1,6 @@
 import os
+
+# Hard cap CPU/thread usage to reduce memory spikes
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -15,6 +17,10 @@ _whisper_model = None
 
 
 def _get_whisper_model():
+    """
+    Lazy-load Whisper ONLY when transcription is requested.
+    Must not load at import time.
+    """
     global _whisper_model
     if _whisper_model is None:
         _whisper_model = whisper.load_model("large-v3", device="cpu")
@@ -23,16 +29,18 @@ def _get_whisper_model():
 
 def extract_audio_from_video(video_path, audio_path):
     clip = VideoFileClip(video_path)
-    audio_extracted = False
-    if clip.audio is not None:
+    try:
+        if clip.audio is None:
+            return False
         clip.audio.write_audiofile(audio_path)
-        audio_extracted = True
-    clip.close()
-    return audio_extracted
+        return True
+    finally:
+        clip.close()
 
 
 def transcribe_audio(audio_path):
     model = _get_whisper_model()
+
     result = model.transcribe(
         audio_path,
         language="en",
@@ -40,4 +48,4 @@ def transcribe_audio(audio_path):
         fp16=False,
         beam_size=1,
     )
-    return result["text"]
+    return result.get("text", "")
